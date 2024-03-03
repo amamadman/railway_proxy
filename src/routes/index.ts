@@ -15,7 +15,10 @@ export default defineEventHandler(async (event) => {
   if (isPreflightRequest(event)) return handleCors(event, {});
 
   // parse destination URL
-  const destination = getQuery<{ destination?: string }>(event).destination;
+  const query = getQuery<{ destination?: string, referer?: string }>(event);
+  const destination = query.destination;
+  const referer = query.referer;
+  
   if (!destination)
     return await sendJson({
       event,
@@ -46,7 +49,10 @@ export default defineEventHandler(async (event) => {
       blacklistedHeaders: getBlacklistedHeaders(),
       fetchOptions: {
         redirect: 'follow',
-        headers: getProxyHeaders(event.headers),
+        headers: {
+          ...getProxyHeaders(event.headers),
+          ...(referer && { referer }), // add referer header if it exists
+        },
         body,
       },
       onResponse(outputEvent, response) {

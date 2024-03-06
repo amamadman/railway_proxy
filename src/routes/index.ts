@@ -15,9 +15,8 @@ export default defineEventHandler(async (event) => {
   if (isPreflightRequest(event)) return handleCors(event, {});
 
   // parse destination URL
-  const query = getQuery<{ destination?: string, referer?: string }>(event);
-  const destination = query.destination;
-  const referer = query.referer;
+  const destination = getQuery<{ destination?: string }>(event).destination;
+  const referer = getQuery<{ destination?: string }>(event).referer;
   
   if (!destination)
     return await sendJson({

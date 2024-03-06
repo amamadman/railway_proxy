@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
       blacklistedHeaders: getBlacklistedHeaders(),
       fetchOptions: {
         redirect: 'follow',
-        headers: customHeaders,
+        headers: customHeaders(),
         body,
       },
       onResponse(outputEvent, response) {

@@ -15,17 +15,15 @@ export default defineEventHandler(async (event) => {
   if (isPreflightRequest(event)) return handleCors(event, {});
 
   // parse destination URL
-  const destination = getQuery<{ destination?: string }>(event).destination;
-  const referer = getQuery<{ destination?: string }>(event).referer;
-  
+  const { destination, referer } = getQuery<{ destination?: string, referer?: string }>(event);
+
   if (!destination)
     return await sendJson({
       event,
       status: 200,
       data: {
-        message: `Proxy is working as expected (v${
-          useRuntimeConfig(event).version
-        })`,
+        message: `Proxy is working as expected (v${useRuntimeConfig(event).version
+          })`,
       },
     });
 
@@ -41,6 +39,12 @@ export default defineEventHandler(async (event) => {
   // read body
   const body = await getBodyBuffer(event);
   const token = await createTokenIfNeeded(event);
+  const customHeaders = () => {
+    if (referer)
+      return getProxyHeaders((event.headers).set('Referer', referer))
+    else
+      return getProxyHeaders(event.headers)
+  }
 
   // proxy
   try {
@@ -48,10 +52,7 @@ export default defineEventHandler(async (event) => {
       blacklistedHeaders: getBlacklistedHeaders(),
       fetchOptions: {
         redirect: 'follow',
-        headers: {
-          ...getProxyHeaders(event.headers),
-          ...(referer && { referer }), // add referer header if it exists
-        },
+        headers: customHeaders,
         body,
       },
       onResponse(outputEvent, response) {
